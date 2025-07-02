@@ -1,96 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script defer src="/_vercel/insights/script.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@exampledev/new.css@1.1.2/new.min.css"
-    />
-    <title>Vercel HTML Starter</title>
-    <meta
-      name="description"
-      content="High-performance HTML based website template."
-    />
-  </head>
-  <body>
-    <h1>Vercel HTML Starter</h1>
-    <p>
-      This template is a simple, but powerful single
-      <code>index.html</code> file deployed to
-      <a href="https://vercel.com">Vercel</a>. When your site is deployed, all
-      static assets (like HTML, JavaScript, CSS, images, and more) are deployed
-      globally to every
-      <a href="https://vercel.com/docs/concepts/edge-network/overview"
-        >Vercel Edge Network</a
-      >
-      region.
-    </p>
-    <h2>Simple, privacy-friendly analytics</h2>
-    <p>
-      Want to understand your visitor traffic? Vercel Analytics gives you
-      first-party, privacy-friendly traffic analytics for your HTML site. This
-      template is already configured using the following script:
-    </p>
-    <pre><code>&lt;script defer src="/_vercel/insights/script.js"&gt;&lt;/script&gt;</code></pre>
-    <p>
-      Learn more about
-      <a href="https://vercel.com/analytics">Vercel Analytics</a>.
-    </p>
-    <h2>Integrated with git</h2>
-    <p>
-      Deploying updates to your site is as simple as
-      <code>git push</code> thanks to Vercel's advanced
-      <a href="https://vercel.com/docs/concepts/git">Git Integration</a>.
-      Support for GitHub, GitLab, Bitbucket is zero-configuration, and with the
-      flexible Vercel CLI and API, you can integrate with any tool possible.
-    </p>
-    <p>
-      Learn more about
-      <a href="https://vercel.com/docs/concepts/git">Git Integration</a>.
-    </p>
-    <h2>Fast <code>gzip</code> compression</h2>
-    <p>
-      To help ensure the smallest possible file sizes for your static assets,
-      the Vercel Edge Network compresses files by default using
-      <code>gzip</code>. You can also optionally use
-      <code>brotli</code> compressesion if you prefer.
-    </p>
-    <p>
-      Learn more about
-      <a href="https://vercel.com/docs/concepts/edge-network/compression"
-        >compression</a
-      >.
-    </p>
-    <h2>Advanced routing configuration</h2>
-    <p>
-      Vercel gives you a variety of ways to configure the routing of your
-      website. For example, adding redirects, rewrites, or headers to your page.
-      While you can use <code>vercel.json</code> to define these through JSON,
-      you can also express your routing configuration as code using
-      <a href="https://vercel.com/docs/concepts/functions/edge-middleware"
-        >Vercel Edge Middleware</a
-      >.
-    </p>
-    <p>
-      Middleware runs before the
-      <a href="https://vercel.com/docs/concepts/edge-network/caching"
-        >Vercel Edge Network Cache</a
-      >, so you can configure routing exactly as your application needs. For
-      example, this template uses <code>middleware.js</code> defined in the root
-      of the repository to add additional security headers to the site:
-    </p>
-    <pre><code>referrer-policy: origin-when-cross-origin
-strict-transport-security: max-age=31536000; includeSubDomains; preload
-x-content-type-options: nosniff
-x-dns-prefetch-control: on
-x-frame-options: DENY</code></pre>
-    <p>
-      Learn more about
-      <a href="https://vercel.com/docs/concepts/functions/edge-middleware"
-        >Vercel Edge Middleware</a
-      >.
-    </p>
-  </body>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StaffUp - Dual-Sided Scoring Engine</title>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 StaffUp Scoring Engine</h1>
+            <p>Dual-sided matching for seasonal staffing</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('employer')">👔 Employer View</button>
+            <button class="tab-button" onclick="switchTab('candidate')">👤 Candidate View</button>
+        </div>
+
+        <div id="employer-tab" class="tab-content">
+            <h2>Employer Dashboard - Score Candidates</h2>
+            <p>Upload your job posting and candidate profiles or paste JSON data.</p>
+
+            <div class="data-input">
+                <h3>📋 Job Posting Data
+                    <button class="clear-btn" onclick="clearJobData()">Clear</button>
+                </h3>
+                <div class="file-upload">
+                    <input type="file" id="job-file" accept=".json" onchange="loadJobFile(event)">
+                </div>
+                <textarea id="job-data" placeholder="Paste job posting JSON here or upload file..."></textarea>
+
+                <details class="sample-data">
+                    <summary>📖 Sample Job Posting Format</summary>
+                    <pre>{
+  "title": "Summer Camp Counselor",
+  "company": "Adventure Summer Camp",
+  "role": "Camp Counselor", 
+  "location": "London",
+  "dates": {
+    "start": "2024-06-15",
+    "end": "2024-08-15"
+  },
+  "pay": 450,
+  "accommodation": "shared",
+  "visaSponsorship": false,
+  "requiredCertifications": ["DBS", "First Aid"],
+  "suitabilityTags": ["Works with Teens", "Outdoors", "Sports"]
+}</pre>
+                </details>
+            </div>
+
+            <div class="data-input">
+                <h3>👤 Candidate Profile(s) Data
+                    <button class="clear-btn" onclick="clearCandidateData()">Clear</button>
+                </h3>
+                <div class="file-upload">
+                    <input type="file" id="candidate-file" accept=".json" onchange="loadCandidateFile(event)">
+                </div>
+                <textarea id="candidate-data"
+                    placeholder="Paste candidate profile(s) JSON here or upload file..."></textarea>
+
+                <details class="sample-data">
+                    <summary>📖 Sample Candidate Profile Format</summary>
+                    <pre>{
+  "name": "Emma Johnson",
+  "email": "emma.johnson@email.com",
+  "phone": "+44123456789",
+  "availability": {
+    "start": "2024-06-01",
+    "end": "2024-08-31"
+  },
+  "experience": 2,
+  "certifications": ["DBS", "First Aid", "Safeguarding"],
+  "psychometricScore": 88,
+  "trainingModules": 4,
+  "suitabilityTags": ["Works with Teens", "Outdoors", "Leadership"],
+  "preferences": {
+    "roles": ["Camp Counselor", "Activity Leader"],
+    "locations": ["London", "Manchester"],
+    "accommodation": "shared",
+    "minPay": 400
+  },
+  "visaStatus": "eligible"
+}</pre>
+                </details>
+            </div>
+
+            <button class="btn" onclick="scoreCandidate()">Score Candidate(s)</button>
+            <div id="employer-results" class="results"></div>
+        </div>
+
+        <div id="candidate-tab" class="tab-content" style="display: none;">
+            <h2>Candidate Dashboard - Find Matching Jobs</h2>
+            <p>Upload your profile and job postings or paste JSON data.</p>
+
+            <div class="data-input">
+                <h3>👤 Your Profile Data
+                    <button class="clear-btn" onclick="clearProfileData()">Clear</button>
+                </h3>
+                <div class="file-upload">
+                    <input type="file" id="profile-file" accept=".json" onchange="loadProfileFile(event)">
+                </div>
+                <textarea id="candidate-profile"
+                    placeholder="Paste your candidate profile JSON here or upload file..."></textarea>
+            </div>
+
+            <div class="data-input">
+                <h3>💼 Job Posting(s) Data
+                    <button class="clear-btn" onclick="clearJobProfileData()">Clear</button>
+                </h3>
+                <div class="file-upload">
+                    <input type="file" id="job-profile-file" accept=".json" onchange="loadJobProfileFile(event)">
+                </div>
+                <textarea id="job-profile" placeholder="Paste job posting(s) JSON here or upload file..."></textarea>
+
+                <details class="sample-data">
+                    <summary>📖 Sample Jobs Array Format</summary>
+                    <pre>[
+  {
+    "title": "Summer Camp Counselor",
+    "company": "Adventure Summer Camp",
+    "role": "Camp Counselor",
+    "location": "London",
+    "dates": {
+      "start": "2024-06-15", 
+      "end": "2024-08-15"
+    },
+    "pay": 450,
+    "accommodation": "shared",
+    "visaSponsorship": false,
+    "requiredCertifications": ["DBS", "First Aid"],
+    "suitabilityTags": ["Works with Teens", "Outdoors"]
+  }
+]</pre>
+                </details>
+            </div>
+
+            <button class="btn" onclick="scoreJob()">Score Job(s)</button>
+            <div id="candidate-results" class="results"></div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="./js/config.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/file-handlers.js"></script>
+    <script src="./js/scoring-engine.js"></script>
+    <script src="./js/display.js"></script>
+    <script src="./js/main.js"></script>
+</body>
+
 </html>
