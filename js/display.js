@@ -137,47 +137,6 @@ function displayEmployerResults(job, results) {
       }</strong>
                 </div>
             </div>
-            
-            ${
-              improvements.length > 0
-                ? `
-                <div class="improvement-guide">
-                    <h4>🚀 How this candidate can improve their score:</h4>
-                    <ul class="improvement-steps">
-                        ${improvements
-                          .slice(0, 3)
-                          .map(
-                            (improvement) => `
-                            <li>
-                                <strong>${improvement.category}:</strong> ${improvement.suggestion}
-                                <br><small>Potential gain: +${improvement.points} points (${improvement.impact} impact)</small>
-                            </li>
-                        `
-                          )
-                          .join("")}
-                    </ul>
-                    ${
-                      score.totalScore < 60
-                        ? `
-                        <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px; border-left: 3px solid #ffc107;">
-                            <strong>💡 Recommendation:</strong> Focus on "High" and "Medium" impact improvements first to maximize score gain!
-                        </div>
-                    `
-                        : `
-                        <div style="margin-top: 10px; padding: 10px; background: #d4edda; border-radius: 5px; border-left: 3px solid #28a745;">
-                            <strong>✅ Great candidate!</strong> This person is well-suited for your position.
-                        </div>
-                    `
-                    }
-                </div>
-            `
-                : `
-                <div class="improvement-guide" style="background: #d4edda; border-left: 4px solid #28a745;">
-                    <h4>✅ Perfect match! This candidate is ideal for your position.</h4>
-                    <p>This candidate meets all your requirements exceptionally well. Consider fast-tracking their application!</p>
-                </div>
-            `
-            }
         </div>
     `
     )
@@ -208,35 +167,7 @@ function displayCandidateResults(candidate, results) {
   const poorMatches = results.filter((r) => r.score.totalScore < 40).length;
 
   const summaryHtml = `
-        <div class="candidate-card" style="border-left: 5px solid #17a2b8; margin-bottom: 30px;">
-            <h3>🎯 Job Match Results for ${candidate.name || "You"}</h3>
-            <div class="score-breakdown">
-                <div class="score-item">
-                    <span>💼 Total Jobs Analyzed</span>
-                    <strong>${results.length}</strong>
-                </div>
-                <div class="score-item">
-                    <span>📊 Average Match</span>
-                    <strong>${averageScore}%</strong>
-                </div>
-                <div class="score-item">
-                    <span>🌟 Excellent Matches (80%+)</span>
-                    <strong>${excellentMatches} jobs</strong>
-                </div>
-                <div class="score-item">
-                    <span>👍 Good Matches (60-79%)</span>
-                    <strong>${goodMatches} jobs</strong>
-                </div>
-                <div class="score-item">
-                    <span>⚠️ Fair Matches (40-59%)</span>
-                    <strong>${fairMatches} jobs</strong>
-                </div>
-                <div class="score-item">
-                    <span>❌ Poor Matches (<40%)</span>
-                    <strong>${poorMatches} jobs</strong>
-                </div>
-            </div>
-        </div>
+       
     `;
 
   const jobsHtml = sortedResults
@@ -389,26 +320,7 @@ function displayCandidateResults(candidate, results) {
   const profileSuggestions =
     overallImprovements.length > 0
       ? `
-        <div class="candidate-card" style="border-left: 5px solid #6f42c1; margin-bottom: 20px;">
-            <h3>🎯 Overall Profile Improvement Recommendations</h3>
-            <p>Based on your matches across all jobs, here are the top ways to improve your overall appeal:</p>
-            <div class="improvement-guide">
-                <h4>🚀 Priority Actions:</h4>
-                <ul class="improvement-steps">
-                    ${overallImprovements
-                      .slice(0, 5)
-                      .map(
-                        (improvement) => `
-                        <li>
-                            <strong>${improvement.category}:</strong> ${improvement.suggestion}
-                            <br><small>This appears as an issue in ${improvement.frequency} of your job matches</small>
-                        </li>
-                    `
-                      )
-                      .join("")}
-                </ul>
-            </div>
-        </div>
+        
     `
       : "";
 
