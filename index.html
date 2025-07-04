@@ -4,23 +4,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StaffUp - Dual-Sided Scoring Engine</title>
-    <link rel="stylesheet" href="./css/styles.css">
+    <title>StaffUp - Bulk Scoring Engine</title>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
+    <!-- DEFINE ALL FUNCTIONS FIRST IN HEAD -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/file-handlers.js"></script>
+    <script src="js/scoring-engine.js"></script>
+    <script src="js/improvements.js"></script>
+    <script src="js/display.js"></script>
+    <script src="js/main.js"></script>
+
     <div class="container">
         <div class="header">
-            <h1>🚀 StaffUp Scoring Engine</h1>
-            <p>Dual-sided matching for seasonal staffing</p>
+            <h1>🚀 StaffUp Bulk Scoring Engine</h1>
+            <p>Advanced dual-sided matching for multiple candidates and jobs</p>
         </div>
 
         <div class="tabs">
-            <button class="tab-button active" onclick="switchTab('employer')">👔 Employer View</button>
+            <button class="tab-button active" onclick="switchTab('bulk')">📊 Bulk Matching</button>
+            <button class="tab-button" onclick="switchTab('employer')">👔 Employer View</button>
             <button class="tab-button" onclick="switchTab('candidate')">👤 Candidate View</button>
         </div>
 
-        <div id="employer-tab" class="tab-content">
+        <!-- Bulk Matching Tab -->
+        <div id="bulk-tab" class="tab-content">
+            <h2>Bulk Matching Dashboard</h2>
+            <p>Upload multiple candidates and multiple jobs for comprehensive matching analysis.</p>
+
+            <div class="data-input">
+                <h3>👥 Multiple Candidates Data
+                    <button class="clear-btn" onclick="clearBulkCandidates()">Clear</button>
+                </h3>
+                <div class="file-upload">
+                    <input type="file" id="bulk-candidates-file" accept=".json"
+                        onchange="loadBulkCandidatesFile(event)">
+                </div>
+                <textarea id="bulk-candidates-data"
+                    placeholder="Paste array of candidate profiles JSON here or upload file..."></textarea>
+
+                <details class="sample-data">
+                    <summary>📖 Sample Multiple Candidates Format</summary>
+                    <pre>[
+  {
+    "name": "Emma Johnson",
+    "email": "emma.johnson@email.com",
+    "phone": "+44123456789",
+    "availability": {
+      "start": "2024-06-01",
+      "end": "2024-08-31"
+    },
+    "experience": 2,
+    "certifications": ["DBS", "First Aid", "Safeguarding"],
+    "psychometricScore": 88,
+    "trainingModules": 4,
+    "suitabilityTags": ["Works with Teens", "Outdoors", "Leadership"]
+  },
+  {
+    "name": "James Smith", 
+    "email": "james.smith@email.com",
+    "phone": "+44987654321",
+    "availability": {
+      "start": "2024-06-15",
+      "end": "2024-08-15"
+    },
+    "experience": 1,
+    "certifications": ["DBS", "First Aid"],
+    "psychometricScore": 92,
+    "trainingModules": 3,
+    "suitabilityTags": ["Sports", "Works with Teens"]
+  }
+]</pre>
+                </details>
+            </div>
+
+            <div class="data-input">
+                <h3>💼 Multiple Jobs Data
+                    <button class="clear-btn" onclick="clearBulkJobs()">Clear</button>
+                </h3>
+                <div class="file-upload">
+                    <input type="file" id="bulk-jobs-file" accept=".json" onchange="loadBulkJobsFile(event)">
+                </div>
+                <textarea id="bulk-jobs-data"
+                    placeholder="Paste array of job postings JSON here or upload file..."></textarea>
+
+                <details class="sample-data">
+                    <summary>📖 Sample Multiple Jobs Format</summary>
+                    <pre>[
+  {
+    "title": "Summer Camp Counselor",
+    "company": "Adventure Summer Camp", 
+    "role": "Camp Counselor",
+    "dates": {
+      "start": "2024-06-15",
+      "end": "2024-08-15"
+    },
+    "requiredExperience": 2,
+    "requiredCertifications": ["DBS", "First Aid"],
+    "minimumPsychometricScore": 80,
+    "requiredTrainingModules": 4,
+    "suitabilityTags": ["Works with Teens", "Outdoors"]
+  },
+  {
+    "title": "Sports Activity Leader",
+    "company": "ActiveKids Sports Camp",
+    "role": "Sports Instructor", 
+    "dates": {
+      "start": "2024-06-01",
+      "end": "2024-08-31"
+    },
+    "requiredExperience": 1,
+    "requiredCertifications": ["DBS", "Sports Coaching"],
+    "minimumPsychometricScore": 85,
+    "requiredTrainingModules": 3,
+    "suitabilityTags": ["Sports", "Works with Children"]
+  }
+]</pre>
+                </details>
+            </div>
+
+            <button class="btn" onclick="processBulkMatching()">🚀 Process Bulk Matching</button>
+            <div id="bulk-results" class="results"></div>
+        </div>
+
+        <!-- Original Employer Tab -->
+        <div id="employer-tab" class="tab-content" style="display: none;">
             <h2>Employer Dashboard - Score Candidates</h2>
             <p>Upload your job posting and candidate profiles or paste JSON data.</p>
 
@@ -38,17 +149,16 @@
                     <pre>{
   "title": "Summer Camp Counselor",
   "company": "Adventure Summer Camp",
-  "role": "Camp Counselor", 
-  "location": "London",
+  "role": "Camp Counselor",
   "dates": {
     "start": "2024-06-15",
     "end": "2024-08-15"
   },
-  "pay": 450,
-  "accommodation": "shared",
-  "visaSponsorship": false,
+  "requiredExperience": 2,
   "requiredCertifications": ["DBS", "First Aid"],
-  "suitabilityTags": ["Works with Teens", "Outdoors", "Sports"]
+  "minimumPsychometricScore": 80,
+  "requiredTrainingModules": 4,
+  "suitabilityTags": ["Works with Teens", "Outdoors"]
 }</pre>
                 </details>
             </div>
@@ -66,25 +176,18 @@
                 <details class="sample-data">
                     <summary>📖 Sample Candidate Profile Format</summary>
                     <pre>{
-  "name": "Emma Johnson",
-  "email": "emma.johnson@email.com",
-  "phone": "+44123456789",
+  "name": "James Smith",
+  "email": "james.smith@email.com", 
+  "phone": "+44987654321",
   "availability": {
-    "start": "2024-06-01",
-    "end": "2024-08-31"
+    "start": "2024-06-15",
+    "end": "2024-08-15"
   },
-  "experience": 2,
-  "certifications": ["DBS", "First Aid", "Safeguarding"],
-  "psychometricScore": 88,
-  "trainingModules": 4,
-  "suitabilityTags": ["Works with Teens", "Outdoors", "Leadership"],
-  "preferences": {
-    "roles": ["Camp Counselor", "Activity Leader"],
-    "locations": ["London", "Manchester"],
-    "accommodation": "shared",
-    "minPay": 400
-  },
-  "visaStatus": "eligible"
+  "experience": 1,
+  "certifications": ["DBS", "First Aid"],
+  "psychometricScore": 92,
+  "trainingModules": 3,
+  "suitabilityTags": ["Sports", "Works with Teens"]
 }</pre>
                 </details>
             </div>
@@ -93,6 +196,7 @@
             <div id="employer-results" class="results"></div>
         </div>
 
+        <!-- Original Candidate Tab -->
         <div id="candidate-tab" class="tab-content" style="display: none;">
             <h2>Candidate Dashboard - Find Matching Jobs</h2>
             <p>Upload your profile and job postings or paste JSON data.</p>
@@ -106,6 +210,24 @@
                 </div>
                 <textarea id="candidate-profile"
                     placeholder="Paste your candidate profile JSON here or upload file..."></textarea>
+
+                <details class="sample-data">
+                    <summary>📖 Sample Candidate Profile Format</summary>
+                    <pre>{
+  "name": "James Smith",
+  "email": "james.smith@email.com",
+  "phone": "+44987654321", 
+  "availability": {
+    "start": "2024-06-15",
+    "end": "2024-08-15"
+  },
+  "experience": 1,
+  "certifications": ["DBS", "First Aid"],
+  "psychometricScore": 92,
+  "trainingModules": 3,
+  "suitabilityTags": ["Sports", "Works with Teens"]
+}</pre>
+                </details>
             </div>
 
             <div class="data-input">
@@ -123,17 +245,30 @@
   {
     "title": "Summer Camp Counselor",
     "company": "Adventure Summer Camp",
-    "role": "Camp Counselor",
-    "location": "London",
+    "role": "Camp Counselor", 
     "dates": {
-      "start": "2024-06-15", 
+      "start": "2024-06-15",
       "end": "2024-08-15"
     },
-    "pay": 450,
-    "accommodation": "shared",
-    "visaSponsorship": false,
+    "requiredExperience": 2,
     "requiredCertifications": ["DBS", "First Aid"],
+    "minimumPsychometricScore": 80,
+    "requiredTrainingModules": 4,
     "suitabilityTags": ["Works with Teens", "Outdoors"]
+  },
+  {
+    "title": "Sports Activity Leader", 
+    "company": "ActiveKids Sports Camp",
+    "role": "Sports Instructor",
+    "dates": {
+      "start": "2024-06-01",
+      "end": "2024-08-31"
+    },
+    "requiredExperience": 1,
+    "requiredCertifications": ["DBS", "Sports Coaching"],
+    "minimumPsychometricScore": 85,
+    "requiredTrainingModules": 3,
+    "suitabilityTags": ["Sports", "Works with Children"]
   }
 ]</pre>
                 </details>
@@ -143,14 +278,6 @@
             <div id="candidate-results" class="results"></div>
         </div>
     </div>
-
-    <!-- JavaScript Files -->
-    <script src="./js/config.js"></script>
-    <script src="./js/utils.js"></script>
-    <script src="./js/file-handlers.js"></script>
-    <script src="./js/scoring-engine.js"></script>
-    <script src="./js/display.js"></script>
-    <script src="./js/main.js"></script>
 </body>
 
 </html>

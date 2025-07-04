@@ -1,23 +1,25 @@
-// Core scoring functions from project documents
+// Core scoring functions - UPDATED TO MATCH 7 CRITERIA
+
 function scoreApplicant(job, candidate) {
   const scores = {};
   const weights = SCORING_WEIGHTS.employer;
 
-  // 1. Availability Match (25 points)
+  // 1. Availability Match (25 points) - Compare job dates vs candidate dates
   const availabilityScore = calculateDateOverlap(
     candidate.availability || {},
     job.dates || {}
   );
   scores.availabilityMatch = availabilityScore * weights.availabilityMatch;
 
-  // 2. Relevant Experience (10 points)
-  const experienceScore = Math.min(
-    1,
-    (candidate.experience || 0) / MAX_VALUES.experience
-  );
-  scores.relevantExperience = experienceScore * weights.relevantExperience;
+  // 2. Relevant Experience (10 points) - Compare candidate experience vs job requirement
+  const candidateExp = candidate.experience || 0;
+  const requiredExp = job.requiredExperience || 1; // Default minimum 1 season
+  const experienceScore =
+    candidateExp >= requiredExp ? 1 : candidateExp / requiredExp;
+  scores.relevantExperience =
+    Math.min(1, experienceScore) * weights.relevantExperience;
 
-  // 3. Certifications (10 points)
+  // 3. Certifications (10 points) - DBS, Safeguarding, First Aid etc.
   const requiredCerts = job.requiredCertifications || [];
   const candidateCerts = candidate.certifications || [];
   const certMatch =
@@ -27,29 +29,50 @@ function scoreApplicant(job, candidate) {
       : 1;
   scores.certifications = certMatch * weights.certifications;
 
-  // 4. Psychometric Skills (30 points)
-  const skillsScore =
-    (candidate.psychometricScore || 70) / MAX_VALUES.psychometricScore;
-  scores.psychometricSkills = skillsScore * weights.psychometricSkills;
+  // 4. Psychometric Skills (30 points) - Compare vs minimum required score
+  const candidatePsych = candidate.psychometricScore; // No default value
+  const minimumPsych = job.minimumPsychometricScore || 70;
 
-  // 5. Profile Completion (10 points)
-  const completedFields = PROFILE_FIELDS.filter(
+  let psychScore = 0; // Always start with 0
+
+  // Only calculate if candidate actually has a psychometric score
+  if (
+    candidatePsych !== null &&
+    candidatePsych !== undefined &&
+    candidatePsych > 0
+  ) {
+    if (candidatePsych >= minimumPsych) {
+      // If candidate meets minimum, give points based on performance
+      psychScore = candidatePsych / 100; // Simple percentage: 80% score = 0.8, 100% score = 1.0
+    } else {
+      // If below minimum, proportional scoring
+      psychScore = candidatePsych / 100; // Same logic - just percentage of max
+    }
+  }
+
+  scores.psychometricSkills = psychScore * weights.psychometricSkills;
+
+  // 5. Profile Completion (10 points) - Based on % fields completed
+  const completedFields = CORE_PROFILE_FIELDS.filter(
     (field) =>
       candidate[field] &&
       candidate[field] !== null &&
-      candidate[field] !== undefined
+      candidate[field] !== undefined &&
+      (Array.isArray(candidate[field]) ? candidate[field].length > 0 : true)
   ).length;
-  const completionScore = completedFields / PROFILE_FIELDS.length;
+  const completionScore = completedFields / CORE_PROFILE_FIELDS.length;
   scores.profileCompletion = completionScore * weights.profileCompletion;
 
-  // 6. Training Modules (10 points)
-  const trainingScore = Math.min(
-    1,
-    (candidate.trainingModules || 0) / MAX_VALUES.trainingModules
-  );
-  scores.trainingModules = trainingScore * weights.trainingModules;
+  // 6. Training Modules (10 points) - Compare vs required training
+  const candidateTraining = candidate.trainingModules || 0;
+  const requiredTraining = job.requiredTrainingModules || 3; // Default minimum 3
+  const trainingScore =
+    candidateTraining >= requiredTraining
+      ? 1
+      : candidateTraining / requiredTraining;
+  scores.trainingModules = Math.min(1, trainingScore) * weights.trainingModules;
 
-  // 7. Suitability Tags (5 points)
+  // 7. Suitability Tag Match (5 points) - e.g. "Works with Teens" or "Over 18"
   const jobTags = job.suitabilityTags || [];
   const candidateTags = candidate.suitabilityTags || [];
   const tagMatch =
@@ -71,232 +94,119 @@ function scoreApplicant(job, candidate) {
 }
 
 function scoreJobMatch(candidate, job) {
-  const scores = {};
-  const weights = SCORING_WEIGHTS.candidate;
-
-  // 1. Date Match (25 points)
-  const dateScore = calculateDateOverlap(
-    candidate.availability || {},
-    job.dates || {}
-  );
-  scores.dateMatch = dateScore * weights.dateMatch;
-
-  // 2. Role Preference (15 points)
-  const preferredRoles = candidate.preferences?.roles || [];
-  const roleMatch = preferredRoles.includes(job.role) ? 1 : 0.5;
-  scores.rolePreference = roleMatch * weights.rolePreference;
-
-  // 3. Location Match (15 points)
-  const preferredLocations = candidate.preferences?.locations || [];
-  const locationScore = preferredLocations.includes(job.location)
-    ? 1
-    : calculateLocationDistance(
-        job.location || "",
-        preferredLocations[0] || ""
-      );
-  scores.locationMatch = locationScore * weights.locationMatch;
-
-  // 4. Accommodation Match (10 points)
-  const prefAccommodation = candidate.preferences?.accommodation;
-  const jobAccommodation = job.accommodation;
-  const accommodationScore = prefAccommodation === jobAccommodation ? 1 : 0.7;
-  scores.accommodationMatch = accommodationScore * weights.accommodationMatch;
-
-  // 5. Pay Match (20 points)
-  const expectedPay = candidate.preferences?.minPay || 0;
-  const jobPay = job.pay || 0;
-  const payScore =
-    jobPay >= expectedPay ? 1 : expectedPay > 0 ? jobPay / expectedPay : 1;
-  scores.payMatch = payScore * weights.payMatch;
-
-  // 6. Visa Eligibility (10 points)
-  const visaScore =
-    candidate.visaStatus === "eligible" || job.visaSponsorship ? 1 : 0;
-  scores.visaEligibility = visaScore * weights.visaEligibility;
-
-  // 7. Required Certifications (5 points)
-  const requiredCerts = job.requiredCertifications || [];
-  const candidateCerts = candidate.certifications || [];
-  const certScore =
-    requiredCerts.length > 0
-      ? requiredCerts.filter((cert) => candidateCerts.includes(cert)).length /
-        requiredCerts.length
-      : 1;
-  scores.requiredCertifications = certScore * weights.requiredCertifications;
-
-  const totalScore = Math.round(
-    Object.values(scores).reduce((sum, score) => sum + score, 0)
-  );
-
-  return {
-    totalScore,
-    breakdown: scores,
-    tier: getTier(totalScore),
-  };
+  // SAME SCORING AS EMPLOYER PERSPECTIVE - CORE 7 CRITERIA ONLY
+  return scoreApplicant(job, candidate);
 }
 
-// Boost suggestion functions
-function generateCandidateImprovements(job, candidate, currentScore) {
-  const improvements = [];
+// Bulk processing functions
+function processBulkMatches(candidates, jobs) {
+  const matchMatrix = [];
+  const candidateResults = [];
+  const jobResults = [];
+  let totalMatches = 0;
+  let excellentMatches = 0;
+  let goodMatches = 0;
+  let fairMatches = 0;
+  let poorMatches = 0;
 
-  // Availability improvement
-  const availabilityOverlap = calculateDateOverlap(
-    candidate.availability || {},
-    job.dates || {}
-  );
-  if (
-    availabilityOverlap < 1 &&
-    job.dates &&
-    job.dates.start &&
-    job.dates.end
-  ) {
-    improvements.push({
-      category: "Availability",
-      suggestion: `Extend your availability to cover the full job period (${job.dates.start} to ${job.dates.end})`,
-      impact: "High",
-      points: Math.round(
-        (1 - availabilityOverlap) * SCORING_WEIGHTS.employer.availabilityMatch
-      ),
+  // Create match matrix
+  candidates.forEach((candidate, candidateIndex) => {
+    const candidateRow = {
+      candidate: candidate,
+      matches: [],
+    };
+
+    jobs.forEach((job, jobIndex) => {
+      const score = scoreApplicant(job, candidate);
+
+      const match = {
+        candidateIndex,
+        jobIndex,
+        candidate: candidate.name || `Candidate ${candidateIndex + 1}`,
+        job: job.title || `Job ${jobIndex + 1}`,
+        score: score.totalScore,
+        tier: score.tier,
+      };
+
+      candidateRow.matches.push(match);
+      totalMatches++;
+
+      // Count match quality
+      if (match.score >= 80) excellentMatches++;
+      else if (match.score >= 60) goodMatches++;
+      else if (match.score >= 40) fairMatches++;
+      else poorMatches++;
     });
-  }
 
-  // Certification improvements
-  const requiredCerts = job.requiredCertifications || [];
-  const candidateCerts = candidate.certifications || [];
-  const missingCerts = requiredCerts.filter(
-    (cert) => !candidateCerts.includes(cert)
-  );
-  if (missingCerts.length > 0) {
-    improvements.push({
-      category: "Certifications",
-      suggestion: `Obtain required certifications: ${missingCerts.join(", ")}`,
-      impact: "Medium",
-      points: Math.round(
-        (missingCerts.length / requiredCerts.length) *
-          SCORING_WEIGHTS.employer.certifications
-      ),
-    });
-  }
+    matchMatrix.push(candidateRow);
+  });
 
-  // Profile completion
-  const missingFields = PROFILE_FIELDS.filter((field) => !candidate[field]);
-  if (missingFields.length > 0) {
-    improvements.push({
-      category: "Profile Completion",
-      suggestion: `Complete missing profile fields: ${missingFields.join(
-        ", "
-      )}`,
-      impact: "Low",
-      points: Math.round(
-        (missingFields.length / PROFILE_FIELDS.length) *
-          SCORING_WEIGHTS.employer.profileCompletion
-      ),
-    });
-  }
+  // Generate candidate summaries
+  candidates.forEach((candidate, index) => {
+    const candidateMatches = matchMatrix[index].matches;
+    const bestMatch = candidateMatches.reduce((best, current) =>
+      current.score > best.score ? current : best
+    );
+    const averageScore = Math.round(
+      candidateMatches.reduce((sum, match) => sum + match.score, 0) /
+        candidateMatches.length
+    );
 
-  // Training modules
-  const currentTraining = candidate.trainingModules || 0;
-  if (currentTraining < MAX_VALUES.trainingModules) {
-    improvements.push({
-      category: "Training",
-      suggestion: `Complete ${
-        MAX_VALUES.trainingModules - currentTraining
-      } more training modules to maximize your score`,
-      impact: "Medium",
-      points: Math.round(
-        ((MAX_VALUES.trainingModules - currentTraining) /
-          MAX_VALUES.trainingModules) *
-          SCORING_WEIGHTS.employer.trainingModules
-      ),
-    });
-  }
-
-  return improvements.sort((a, b) => b.points - a.points);
-}
-
-function generateJobMatchImprovements(candidate, job, currentScore) {
-  const improvements = [];
-
-  // Pay expectations
-  const expectedPay = candidate.preferences?.minPay || 0;
-  const jobPay = job.pay || 0;
-  if (expectedPay > jobPay && expectedPay > 0) {
-    improvements.push({
-      category: "Pay Expectations",
-      suggestion: `Consider lowering your minimum pay expectation from £${expectedPay} to £${jobPay} per week`,
-      impact: "High",
-      points: Math.round(
-        (1 - jobPay / expectedPay) * SCORING_WEIGHTS.candidate.payMatch
-      ),
-    });
-  }
-
-  // Location preferences
-  const preferredLocations = candidate.preferences?.locations || [];
-  if (!preferredLocations.includes(job.location)) {
-    improvements.push({
-      category: "Location Flexibility",
-      suggestion: `Add ${job.location} to your preferred locations list`,
-      impact: "Medium",
-      points: Math.round(0.5 * SCORING_WEIGHTS.candidate.locationMatch),
-    });
-  }
-
-  // Accommodation preferences
-  const prefAccommodation = candidate.preferences?.accommodation;
-  const jobAccommodation = job.accommodation;
-  if (
-    prefAccommodation &&
-    jobAccommodation &&
-    prefAccommodation !== jobAccommodation
-  ) {
-    improvements.push({
-      category: "Accommodation",
-      suggestion: `Consider accepting ${jobAccommodation} accommodation instead of ${prefAccommodation}`,
-      impact: "Low",
-      points: Math.round(0.3 * SCORING_WEIGHTS.candidate.accommodationMatch),
-    });
-  }
-
-  // Role preferences
-  const preferredRoles = candidate.preferences?.roles || [];
-  if (!preferredRoles.includes(job.role)) {
-    improvements.push({
-      category: "Role Flexibility",
-      suggestion: `Add "${job.role}" to your preferred roles list`,
-      impact: "Medium",
-      points: Math.round(0.5 * SCORING_WEIGHTS.candidate.rolePreference),
-    });
-  }
-
-  return improvements.sort((a, b) => b.points - a.points);
-}
-
-function generateOverallProfileImprovements(candidate, results) {
-  const improvementCounts = {};
-
-  results.forEach(({ improvements }) => {
-    improvements.forEach((improvement) => {
-      const key = improvement.category;
-      if (!improvementCounts[key]) {
-        improvementCounts[key] = {
-          category: improvement.category,
-          suggestion: improvement.suggestion,
-          count: 0,
-          totalPoints: 0,
-        };
-      }
-      improvementCounts[key].count++;
-      improvementCounts[key].totalPoints += improvement.points;
+    candidateResults.push({
+      candidate,
+      bestMatch,
+      averageScore,
+      totalJobs: jobs.length,
+      excellentMatches: candidateMatches.filter((m) => m.score >= 80).length,
+      goodMatches: candidateMatches.filter((m) => m.score >= 60 && m.score < 80)
+        .length,
     });
   });
 
-  return Object.values(improvementCounts)
-    .filter((item) => item.count > 1) // Only show improvements that affect multiple jobs
-    .map((item) => ({
-      ...item,
-      frequency: `${item.count}/${results.length}`,
-      averagePoints: Math.round(item.totalPoints / item.count),
-    }))
-    .sort((a, b) => b.count - a.count || b.averagePoints - a.averagePoints);
+  // Generate job summaries
+  jobs.forEach((job, jobIndex) => {
+    const jobMatches = matchMatrix.map((row) => row.matches[jobIndex]);
+    const bestMatch = jobMatches.reduce((best, current) =>
+      current.score > best.score ? current : best
+    );
+    const averageScore = Math.round(
+      jobMatches.reduce((sum, match) => sum + match.score, 0) /
+        jobMatches.length
+    );
+
+    jobResults.push({
+      job,
+      bestMatch,
+      averageScore,
+      totalCandidates: candidates.length,
+      excellentMatches: jobMatches.filter((m) => m.score >= 80).length,
+      goodMatches: jobMatches.filter((m) => m.score >= 60 && m.score < 80)
+        .length,
+    });
+  });
+
+  return {
+    matchMatrix,
+    candidateResults: candidateResults.sort(
+      (a, b) => b.averageScore - a.averageScore
+    ),
+    jobResults: jobResults.sort((a, b) => b.averageScore - a.averageScore),
+    summary: {
+      totalCandidates: candidates.length,
+      totalJobs: jobs.length,
+      totalMatches,
+      excellentMatches,
+      goodMatches,
+      fairMatches,
+      poorMatches,
+      averageMatchScore: Math.round(
+        matchMatrix
+          .map((row) => row.matches)
+          .flat()
+          .reduce((sum, match) => sum + match.score, 0) / totalMatches
+      ),
+    },
+  };
 }
+
+console.log("✅ Scoring-engine.js loaded successfully");

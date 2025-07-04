@@ -1,18 +1,4 @@
-// Extract only employer-required fields from candidate profile
-function extractEmployerRequiredFields(candidate) {
-  return {
-    name: candidate.name || null,
-    availability: candidate.availability || null,
-    experience: candidate.experience || 0,
-    certifications: candidate.certifications || [],
-    psychometricScore: candidate.psychometricScore || null,
-    email: candidate.email || null,
-    phone: candidate.phone || null,
-    preferences: candidate.preferences || null,
-    trainingModules: candidate.trainingModules || 0,
-    suitabilityTags: candidate.suitabilityTags || [],
-  };
-}
+// Utility Functions
 
 // Calculate date overlap between candidate availability and job dates
 function calculateDateOverlap(candidateDates, jobDates) {
@@ -43,18 +29,6 @@ function calculateDateOverlap(candidateDates, jobDates) {
   return Math.min(1, overlapDays / jobDays);
 }
 
-// Calculate location distance score
-function calculateLocationDistance(location1, location2) {
-  const loc1 = UK_REGIONS[location1?.toLowerCase()] || { lat: 0, lng: 0 };
-  const loc2 = UK_REGIONS[location2?.toLowerCase()] || { lat: 0, lng: 0 };
-
-  const distance = Math.sqrt(
-    Math.pow(loc1.lat - loc2.lat, 2) + Math.pow(loc1.lng - loc2.lng, 2)
-  );
-
-  return Math.max(0, 1 - distance / MAX_VALUES.locationDistance);
-}
-
 // Get tier based on score
 function getTier(score) {
   if (score >= 80) return "gold";
@@ -78,6 +52,14 @@ function getMatchText(score) {
   return "Poor Match";
 }
 
+// Get score cell class for color coding
+function getScoreCellClass(score) {
+  if (score >= 80) return "score-excellent";
+  if (score >= 60) return "score-good";
+  if (score >= 40) return "score-fair";
+  return "score-poor";
+}
+
 // Tab switching function
 function switchTab(tab) {
   document
@@ -94,6 +76,16 @@ function switchTab(tab) {
 }
 
 // Clear functions
+function clearBulkCandidates() {
+  document.getElementById("bulk-candidates-data").value = "";
+  document.getElementById("bulk-candidates-file").value = "";
+}
+
+function clearBulkJobs() {
+  document.getElementById("bulk-jobs-data").value = "";
+  document.getElementById("bulk-jobs-file").value = "";
+}
+
 function clearJobData() {
   document.getElementById("job-data").value = "";
   document.getElementById("job-file").value = "";
@@ -113,3 +105,5 @@ function clearJobProfileData() {
   document.getElementById("job-profile").value = "";
   document.getElementById("job-profile-file").value = "";
 }
+
+console.log("✅ Utils.js loaded successfully");
